@@ -63,6 +63,8 @@ export default defineSchema({
       exists: v.boolean(),
       content: v.optional(v.string()),
       error: v.optional(v.string()),
+      statusCode: v.optional(v.number()),
+      contentType: v.optional(v.string()),
     })),
     created_at: v.number(),
   })

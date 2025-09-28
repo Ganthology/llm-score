@@ -12,6 +12,8 @@ export const saveAIFiles = mutation({
       exists: v.boolean(),
       content: v.optional(v.string()),
       error: v.optional(v.string()),
+      statusCode: v.optional(v.number()),
+      contentType: v.optional(v.string()),
     })),
   },
   handler: async (ctx, args) => {

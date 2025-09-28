@@ -5,6 +5,7 @@ import { api } from '../../convex/_generated/api';
 import { useMemo } from 'react';
 import DomainCard from '../../components/DomainCard';
 import DashboardStats from '../../components/DashboardStats';
+import { authClient } from '@/lib/auth-client';
 
 interface Evaluation {
   _id: string;
@@ -35,16 +36,18 @@ interface DomainStats {
 }
 
 export default function Dashboard() {
-  // Get the current user from better-auth integration
-  const currentUser = useQuery(api.auth.getCurrentUser);
+  // Use Better Auth client session for faster access
+  const { data: session, isPending } = authClient.useSession();
   
-  // Debug: log the current user structure
-  console.log('Current user object:', currentUser);
+  // Debug: log the session structure
+  console.log('Session object:', session);
+  console.log('Is session pending:', isPending);
   
-  // Try multiple possible field names for userId
-  const userId = currentUser?.userId;
-  console.log('Extracted userId:', userId);
-  console.log('Available user fields:', currentUser ? Object.keys(currentUser) : 'no user');
+  // Better Auth session contains user info
+  const userId = session?.user?.id;
+  console.log('Extracted userId from session:', userId);
+  console.log('Available session fields:', session ? Object.keys(session) : 'no session');
+  console.log('Available user fields:', session?.user ? Object.keys(session.user) : 'no user');
 
   const groupedEvaluations = useQuery(
     api.evaluations.getEvaluationsByUserGroupedByDomain,
@@ -52,10 +55,25 @@ export default function Dashboard() {
   );
 
   console.log('Grouped evaluations:', groupedEvaluations);
+  console.log('Is groupedEvaluations undefined?', groupedEvaluations === undefined);
+  console.log('Is groupedEvaluations null?', groupedEvaluations === null);
+  console.log('Type of groupedEvaluations:', typeof groupedEvaluations);
 
   // Calculate dashboard stats
   const dashboardStats = useMemo(() => {
-    if (!groupedEvaluations) return null;
+    // If still loading, return null
+    if (groupedEvaluations === undefined) return null;
+    
+    // If we have the result (even if empty), calculate stats
+    if (groupedEvaluations === null || typeof groupedEvaluations !== 'object') {
+      return {
+        totalDomains: 0,
+        totalEvaluations: 0,
+        averageScore: 0,
+        topScore: 0,
+        recentActivity: 0,
+      };
+    }
 
     const domains = Object.keys(groupedEvaluations);
     const allEvaluations = Object.values(groupedEvaluations).flat();
@@ -88,7 +106,9 @@ export default function Dashboard() {
 
   // Convert grouped evaluations to domain stats
   const domainStats: DomainStats[] = useMemo(() => {
-    if (!groupedEvaluations) return [];
+    if (groupedEvaluations === undefined || groupedEvaluations === null || typeof groupedEvaluations !== 'object') {
+      return [];
+    }
 
     return Object.entries(groupedEvaluations).map(([domain, evaluations]) => {
       const sortedEvaluations = [...evaluations].sort((a, b) => b.created_at - a.created_at);
@@ -111,11 +131,12 @@ export default function Dashboard() {
     }).sort((a, b) => b.lastEvaluated - a.lastEvaluated); // Sort by most recently evaluated
   }, [groupedEvaluations]);
 
-  // Show loading while fetching user info
-  if (currentUser === undefined) {
+  // Show loading while checking session
+  if (isPending) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 font-mono">
         <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-black mb-4"></div>
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
@@ -123,22 +144,30 @@ export default function Dashboard() {
   }
 
   // Show sign in message if user is not authenticated
-  if (currentUser === null) {
+  if (!session?.user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 font-mono">
         <div className="text-center">
-          <p className="text-gray-600">Please sign in to view your dashboard.</p>
+          <h1 className="text-xl font-bold text-black mb-4">Authentication Required</h1>
+          <p className="text-gray-600 mb-6">Please sign in to view your dashboard.</p>
+          <a 
+            href="/"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-black hover:bg-gray-800 transition-colors"
+          >
+            Go to Sign In
+          </a>
         </div>
       </div>
     );
   }
 
   // Show loading while fetching evaluations
-  if (!groupedEvaluations) {
+  if (groupedEvaluations === undefined) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 font-mono">
         <div className="text-center">
-          <p className="text-gray-600">Loading dashboard...</p>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-black mb-4"></div>
+          <p className="text-gray-600">Loading dashboard data...</p>
         </div>
       </div>
     );

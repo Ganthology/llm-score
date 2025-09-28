@@ -15,6 +15,8 @@ interface FileCheck {
   exists: boolean;
   content?: string;
   error?: string;
+  statusCode?: number;
+  contentType?: string;
 }
 
 interface EvaluationResult {
@@ -486,14 +488,29 @@ export default function Home() {
                     <span className="font-mono text-sm font-bold">
                       {file.path}
                     </span>
-                    <span className={`font-mono text-xs px-2 py-1 rounded ${
-                      file.exists
-                        ? 'bg-green-100 text-green-800 border border-green-300'
-                        : 'bg-red-100 text-red-800 border border-red-300'
-                    }`}>
-                      {file.exists ? 'EXISTS' : 'NOT FOUND'}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {file.statusCode && (
+                        <span className="font-mono text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">
+                          {file.statusCode}
+                        </span>
+                      )}
+                      <span className={`font-mono text-xs px-2 py-1 rounded ${
+                        file.exists
+                          ? 'bg-green-100 text-green-800 border border-green-300'
+                          : 'bg-red-100 text-red-800 border border-red-300'
+                      }`}>
+                        {file.exists ? 'EXISTS' : 'NOT FOUND'}
+                      </span>
+                    </div>
                   </div>
+
+                  {file.contentType && (
+                    <div className="mb-2">
+                      <span className="text-xs text-gray-500 font-mono">
+                        Content-Type: {file.contentType}
+                      </span>
+                    </div>
+                  )}
 
                   {file.exists && file.content && (
                     <div className="mt-3">

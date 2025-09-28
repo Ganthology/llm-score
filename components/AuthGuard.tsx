@@ -1,7 +1,6 @@
 'use client';
 
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
+import { authClient } from "@/lib/auth-client";
 import { AuthButton } from './AuthButton';
 
 interface AuthGuardProps {
@@ -9,19 +8,20 @@ interface AuthGuardProps {
 }
 
 export function AuthGuard({ children }: AuthGuardProps) {
-  const currentUser = useQuery(api.auth.getCurrentUser);
+  const { data: session, isPending } = authClient.useSession();
 
-  // if (currentUser === undefined) {
-  //   return (
-  //     <div className="min-h-screen bg-white flex items-center justify-center p-4 font-mono">
-  //       <div className="text-center">
-  //         <p className="text-gray-600">Checking authentication...</p>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  if (isPending) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center p-4 font-mono">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-black mb-4"></div>
+          <p className="text-gray-600">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
-  if (!currentUser) {
+  if (!session?.user) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-4 font-mono">
         <div className="max-w-md w-full bg-white border border-gray-200 p-8 text-center">

@@ -17,6 +17,8 @@ interface FileCheck {
   exists: boolean;
   content?: string;
   error?: string;
+  statusCode?: number;
+  contentType?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -62,22 +64,65 @@ export async function POST(request: NextRequest) {
           method: 'GET',
           headers: {
             'User-Agent': 'LLMScore/1.0 (AI Optimization Checker)',
+            'Accept': 'text/plain, text/*, */*',
           },
         });
 
+        const contentType = response.headers.get('content-type') || '';
+        const statusCode = response.status;
+        
         const fileCheck: FileCheck = {
           path: filePath,
-          exists: response.ok,
+          exists: false, // Will be determined based on analysis below
+          statusCode,
+          contentType,
         };
 
         if (response.ok) {
+          // Status 200-299 - file exists
           try {
             const content = await response.text();
-            // fileCheck.content = content.substring(0, 1000); // Limit content to first 1000 chars
-            fileCheck.content = content;
+            
+            // Additional validation for legitimate text files
+            if (isLegitimateTextFile(content, contentType, filePath)) {
+              fileCheck.exists = true;
+              fileCheck.content = content;
+            } else {
+              fileCheck.exists = false;
+              fileCheck.error = 'File appears to be a generated error page or invalid content';
+            }
           } catch (contentError) {
+            fileCheck.exists = false;
             fileCheck.error = 'Could not read content';
           }
+        } else if (response.status === 404) {
+          // Status 404 - check if it's a legitimate 404 or an error page
+          try {
+            const content = await response.text();
+            
+            if (isLegitimate404(content, contentType)) {
+              fileCheck.exists = false;
+              fileCheck.error = 'File not found (404)';
+            } else if (isProbablyErrorPage(content)) {
+              fileCheck.exists = false;
+              fileCheck.error = 'File not found - website error page';
+            } else {
+              // Unexpected 404 response
+              fileCheck.exists = false;
+              fileCheck.error = 'File not found (unexpected 404 response)';
+            }
+          } catch {
+            fileCheck.exists = false;
+            fileCheck.error = 'File not found (404)';
+          }
+        } else if (response.status >= 400) {
+          // Other client/server errors
+          fileCheck.exists = false;
+          fileCheck.error = `Server error (${response.status})`;
+        } else {
+          // Redirects or other status codes
+          fileCheck.exists = false;
+          fileCheck.error = `Unexpected response (${response.status})`;
         }
 
         fileChecks.push(fileCheck);
@@ -86,8 +131,80 @@ export async function POST(request: NextRequest) {
           path: filePath,
           exists: false,
           error: 'Network error',
+          statusCode: 0,
         });
       }
+    }
+
+    // Helper function to validate if content is a legitimate text file
+    function isLegitimateTextFile(content: string, contentType: string, filePath: string): boolean {
+      // Check content type
+      if (contentType.includes('text/html')) {
+        // If it's HTML, it's likely an error page, not a legitimate AI file
+        return false;
+      }
+      
+      // Check for common error page indicators in content
+      if (isProbablyErrorPage(content)) {
+        return false;
+      }
+      
+      // Check file size - legitimate AI files are usually not empty and not extremely long
+      if (content.trim().length === 0) {
+        return false;
+      }
+      
+      if (content.length > 50000) { // 50KB limit - AI files are usually much smaller
+        return false;
+      }
+      
+      return true;
+    }
+    
+    // Helper function to detect if 404 is legitimate
+    function isLegitimate404(content: string, contentType: string): boolean {
+      // If it's a very short response or empty, it's likely a legitimate 404
+      if (content.trim().length < 100) {
+        return true;
+      }
+      
+      // If content type is text/plain with minimal content, likely legitimate
+      if (contentType.includes('text/plain') && content.trim().length < 500) {
+        return true;
+      }
+      
+      return false;
+    }
+    
+    // Helper function to detect error pages
+    function isProbablyErrorPage(content: string): boolean {
+      const lowerContent = content.toLowerCase();
+      
+      // Common error page indicators
+      const errorIndicators = [
+        'page not found',
+        '404 error',
+        'not found',
+        'error 404',
+        'sorry, the page you are looking for',
+        'oops! that page can\'t be found',
+        'the requested url was not found',
+        '<html',
+        '<head>',
+        '<title>',
+        'nginx',
+        'apache',
+        'cloudflare',
+        'page does not exist',
+        'file not found'
+      ];
+      
+      // If content contains multiple error indicators, it's likely an error page
+      const foundIndicators = errorIndicators.filter(indicator => 
+        lowerContent.includes(indicator)
+      );
+      
+      return foundIndicators.length >= 2;
     }
 
     // Save to Convex

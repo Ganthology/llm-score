@@ -1,35 +1,33 @@
 'use client';
 
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import { authClient } from "@/lib/auth-client";
 import { AuthModal } from './AuthModal';
 import { useState } from "react";
 
 export function AuthButton() {
-  const currentUser = useQuery(api.auth.getCurrentUser);
+  const { data: session, isPending } = authClient.useSession();
   const [showModal, setShowModal] = useState(false);
 
   const handleSignOut = async () => {
     await authClient.signOut();
   };
 
-  // if (currentUser === undefined) {
-  //   return (
-  //     <button
-  //       disabled
-  //       className="px-4 py-2 text-sm font-mono text-gray-600 border border-gray-300 rounded cursor-not-allowed"
-  //     >
-  //       Loading...
-  //     </button>
-  //   );
-  // }
+  if (isPending) {
+    return (
+      <button
+        disabled
+        className="px-4 py-2 text-sm font-mono text-gray-600 border border-gray-300 rounded cursor-not-allowed"
+      >
+        Loading...
+      </button>
+    );
+  }
 
-  if (currentUser) {
+  if (session?.user) {
     return (
       <div className="flex items-center gap-3">
         <span className="text-sm text-gray-600 font-mono">
-          Welcome, {currentUser.name || currentUser.email}
+          Welcome, {session.user.name || session.user.email}
         </span>
         <button
           onClick={handleSignOut}
