@@ -4,7 +4,7 @@ import { mutation, query } from "./_generated/server";
 // Store or update website map
 export const saveWebsiteMap = mutation({
   args: {
-    userId: v.string(),
+    userId: v.id("users"),
     url: v.string(),
     domain: v.string(),
     links: v.array(v.object({
@@ -45,7 +45,7 @@ export const saveWebsiteMap = mutation({
 
 // Get website map by user and URL
 export const getWebsiteMap = query({
-  args: { userId: v.string(), url: v.string() },
+  args: { userId: v.id("users"), url: v.string() },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("website_maps")
@@ -56,7 +56,7 @@ export const getWebsiteMap = query({
 
 // Get website maps by user
 export const getWebsiteMapsByUser = query({
-  args: { userId: v.string(), limit: v.optional(v.number()) },
+  args: { userId: v.id("users"), limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
     const limit = args.limit || 50;
     return await ctx.db
