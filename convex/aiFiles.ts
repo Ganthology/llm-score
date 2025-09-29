@@ -15,6 +15,8 @@ export const saveAIFiles = mutation({
       statusCode: v.optional(v.number()),
       contentType: v.optional(v.string()),
     })),
+    credits_consumed: v.number(),
+    scan_type: v.string(),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
