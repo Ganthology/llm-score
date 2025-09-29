@@ -124,7 +124,7 @@ Return only a comma-separated list of keywords, no explanations. Example: "web s
       max_tokens: 200,
     });
 
-    const keywordsText = keywordResponse.choices[0]?.message?.content || '';
+    const keywordsText = keywordResponse.choices[0]?.message?.content?.replaceAll('"', '') || '';
     const keywords = keywordsText.split(',').map(k => k.trim()).filter(k => k.length > 0).slice(0, 10);
 
     console.log('Generated keywords:', keywords);
@@ -328,7 +328,7 @@ Provide a brief analysis (2-3 sentences) of the search performance and AI compat
       recommendations.push('Implement proper technical SEO foundations and content structure');
     }
     if (aiScore < 7) {
-      recommendations.push('Add AI optimization files (/agents.txt, /llm.txt, etc.) for better AI compatibility');
+      recommendations.push('Add AI optimization files (/llms.txt, /llm.txt, /ai.txt, etc.) for better AI compatibility');
     }
 
     if (recommendations.length === 0) {

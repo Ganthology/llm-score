@@ -4,10 +4,9 @@ import { ConvexHttpClient } from 'convex/browser';
 import { getCurrentUserId } from '@/lib/auth-utils';
 
 const AI_FILES = [
-  '/agents.txt',
-  '/agent.txt',
   '/llm.txt',
-  '/llms.txt'
+  '/llms.txt',
+  '/ai.txt'
 ];
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
@@ -79,7 +78,7 @@ export async function POST(request: NextRequest) {
         };
 
         if (response.ok) {
-          // Status 200-299 - file exists
+          // Status 200-299 - check if it's a legitimate file
           try {
             const content = await response.text();
             
@@ -88,41 +87,18 @@ export async function POST(request: NextRequest) {
               fileCheck.exists = true;
               fileCheck.content = content;
             } else {
+              // HTML response or error page - treat as not found
               fileCheck.exists = false;
-              fileCheck.error = 'File appears to be a generated error page or invalid content';
+              // Don't set error - let UI handle messaging
             }
           } catch (contentError) {
             fileCheck.exists = false;
-            fileCheck.error = 'Could not read content';
+            // Don't set error - let UI handle messaging
           }
-        } else if (response.status === 404) {
-          // Status 404 - check if it's a legitimate 404 or an error page
-          try {
-            const content = await response.text();
-            
-            if (isLegitimate404(content, contentType)) {
-              fileCheck.exists = false;
-              fileCheck.error = 'File not found (404)';
-            } else if (isProbablyErrorPage(content)) {
-              fileCheck.exists = false;
-              fileCheck.error = 'File not found - website error page';
-            } else {
-              // Unexpected 404 response
-              fileCheck.exists = false;
-              fileCheck.error = 'File not found (unexpected 404 response)';
-            }
-          } catch {
-            fileCheck.exists = false;
-            fileCheck.error = 'File not found (404)';
-          }
-        } else if (response.status >= 400) {
-          // Other client/server errors
-          fileCheck.exists = false;
-          fileCheck.error = `Server error (${response.status})`;
         } else {
-          // Redirects or other status codes
+          // Any non-200 status - file doesn't exist
           fileCheck.exists = false;
-          fileCheck.error = `Unexpected response (${response.status})`;
+          // Don't set specific error - let UI handle the messaging
         }
 
         fileChecks.push(fileCheck);
@@ -130,8 +106,8 @@ export async function POST(request: NextRequest) {
         fileChecks.push({
           path: filePath,
           exists: false,
-          error: 'Network error',
           statusCode: 0,
+          // Don't set error - let UI handle messaging
         });
       }
     }

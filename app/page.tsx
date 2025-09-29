@@ -481,60 +481,95 @@ export default function Home() {
             <h2 className="text-lg font-bold text-black mb-4">
               AI Optimization Files
             </h2>
-            <div className="space-y-4">
-              {fileChecks.map((file, index) => (
-                <div key={index} className="border border-gray-100 p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-mono text-sm font-bold">
-                      {file.path}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      {file.statusCode && (
-                        <span className="font-mono text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">
-                          {file.statusCode}
-                        </span>
-                      )}
-                      <span className={`font-mono text-xs px-2 py-1 rounded ${
-                        file.exists
-                          ? 'bg-green-100 text-green-800 border border-green-300'
-                          : 'bg-red-100 text-red-800 border border-red-300'
-                      }`}>
-                        {file.exists ? 'EXISTS' : 'NOT FOUND'}
-                      </span>
+
+            {(() => {
+              const existingFiles = fileChecks.filter(file => file.exists);
+              const hasAnyFiles = existingFiles.length > 0;
+
+              if (!hasAnyFiles) {
+                // No files found - show summary message
+                return (
+                  <div className="text-center py-8 bg-yellow-50 border border-yellow-200 rounded">
+                    <div className="mb-4">
+                      <svg 
+                        className="mx-auto h-12 w-12 text-yellow-400" 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor"
+                      >
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeWidth={2} 
+                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.498 0L4.316 16.5c-.77.833.192 2.5 1.732 2.5z" 
+                        />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-yellow-800 mb-2">AI Optimization Files Not Found</h3>
+                    <p className="text-yellow-700 mb-4 font-mono text-sm">
+                      No AI optimization files detected: llm.txt, llms.txt, ai.txt
+                    </p>
+                    <div className="text-xs text-yellow-600 font-mono">
+                      <p className="mb-2">💡 <strong>Recommendation:</strong> Add AI optimization files to help LLMs understand your website</p>
+                      <p>These files provide instructions to AI agents about how to interact with your site</p>
                     </div>
                   </div>
+                );
+              }
 
-                  {file.contentType && (
-                    <div className="mb-2">
-                      <span className="text-xs text-gray-500 font-mono">
-                        Content-Type: {file.contentType}
-                      </span>
+              // Has files - show existing files and optionally missing ones
+              return (
+                <div className="space-y-4">
+                  {/* Show existing files */}
+                  {existingFiles.map((file, index) => (
+                    <div key={`existing-${index}`} className="border border-green-200 bg-green-50 p-4 rounded">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-mono text-sm font-bold text-green-800">
+                          {file.path}
+                        </span>
+                        <span className="font-mono text-xs px-2 py-1 rounded bg-green-100 text-green-800 border border-green-300">
+                          EXISTS
+                        </span>
+                      </div>
+
+                      {file.content && (
+                        <div className="mt-3">
+                          <p className="text-xs text-green-600 mb-1 font-mono">Content Preview:</p>
+                          <pre className="bg-white border border-green-200 p-3 rounded text-xs font-mono text-gray-800 whitespace-pre-wrap break-words max-h-32 overflow-y-auto">
+                            {file.content}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Show summary of missing files if some exist */}
+                  {existingFiles.length < fileChecks.length && (
+                    <div className="p-4 bg-gray-50 border border-gray-200 rounded">
+                      <p className="text-sm text-gray-600 font-mono mb-2">
+                        <strong>Additional AI files not found:</strong>
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {fileChecks
+                          .filter(file => !file.exists)
+                          .map((file, index) => (
+                            <span key={`missing-${index}`} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded font-mono">
+                              {file.path}
+                            </span>
+                          ))
+                        }
+                      </div>
                     </div>
                   )}
 
-                  {file.exists && file.content && (
-                    <div className="mt-3">
-                      <p className="text-xs text-gray-600 mb-1 font-mono">Content Preview:</p>
-                      <pre className="bg-gray-50 p-3 rounded text-xs font-mono text-gray-800 whitespace-pre-wrap break-words max-h-32 overflow-y-auto">
-                        {file.content}
-                      </pre>
-                    </div>
-                  )}
-
-                  {file.error && (
-                    <p className="text-xs text-red-600 font-mono mt-2">
-                      Error: {file.error}
+                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
+                    <p className="text-xs text-blue-800 font-mono">
+                      💡 <strong>AI Optimization Status:</strong> {existingFiles.length} of {fileChecks.length} AI optimization files found. Great start! Consider adding the missing files for even better AI compatibility.
                     </p>
-                  )}
+                  </div>
                 </div>
-              ))}
-            </div>
-
-            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
-              <p className="text-xs text-blue-800 font-mono">
-                💡 <strong>AI Optimization Tip:</strong> These files help AI agents and LLMs understand how to interact with your website. Consider adding them for better AI compatibility.
-              </p>
-            </div>
+              );
+            })()}
           </div>
         )}
         </div>
