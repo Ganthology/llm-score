@@ -23,6 +23,8 @@ export const saveEvaluation = mutation({
       search_insights: v.array(v.string()),
     }),
     recommendations: v.array(v.string()),
+    credits_consumed: v.number(),
+    scan_type: v.string(),
   },
   handler: async (ctx, args) => {
     const now = Date.now();

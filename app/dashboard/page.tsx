@@ -5,6 +5,7 @@ import { api } from '../../convex/_generated/api';
 import { useMemo } from 'react';
 import DomainCard from '../../components/DomainCard';
 import DashboardStats from '../../components/DashboardStats';
+import CreditsDisplay from '../../components/CreditsDisplay';
 import { authClient } from '@/lib/auth-client';
 
 interface Evaluation {
@@ -177,8 +178,21 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-50 p-4 font-mono">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-black mb-2">LLMScore Dashboard</h1>
-          <p className="text-gray-600">Track your website performance and improvements over time</p>
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-black mb-2">LLMScore Dashboard</h1>
+              <p className="text-gray-600">Track your website performance and improvements over time</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <CreditsDisplay />
+              <a
+                href="/pricing"
+                className="text-sm text-gray-600 hover:text-black underline"
+              >
+                Manage Credits
+              </a>
+            </div>
+          </div>
         </div>
 
         {/* Dashboard Stats */}

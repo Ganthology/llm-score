@@ -16,6 +16,8 @@ export const saveWebsiteMap = mutation({
     html_pages: v.number(),
     missing_titles: v.number(),
     missing_descriptions: v.number(),
+    credits_consumed: v.number(),
+    scan_type: v.string(),
   },
   handler: async (ctx, args) => {
     const now = Date.now();

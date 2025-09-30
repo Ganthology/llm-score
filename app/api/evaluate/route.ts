@@ -49,7 +49,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { url, siteMap, aiFiles } = await request.json();
+    const { url, siteMap, aiFiles, scanType = 'basic' } = await request.json();
+
+    // Check if user has enough credits
+    const creditCheck = await convex.query(api.credits.checkCreditsForScan, {
+      userId,
+      scanType,
+    });
+
+    if (!creditCheck.hasEnoughCredits) {
+      return NextResponse.json(
+        { 
+          error: 'Insufficient credits',
+          details: {
+            required: creditCheck.requiredCredits,
+            available: creditCheck.availableCredits,
+            shortfall: creditCheck.shortfall,
+          }
+        },
+        { status: 402 } // Payment Required
+      );
+    }
 
     if (!url) {
       return NextResponse.json(
@@ -371,6 +391,23 @@ Provide a brief analysis (2-3 sentences) of the search performance and AI compat
       },
     };
 
+    // Consume credits for the scan
+    try {
+      await convex.mutation(api.credits.consumeCredits, {
+        userId,
+        credits: creditCheck.requiredCredits,
+        scanType,
+        scanUrl: processedUrl,
+        description: `${scanType.charAt(0).toUpperCase() + scanType.slice(1)} scan of ${domain}`,
+      });
+    } catch (creditError) {
+      console.error('Error consuming credits:', creditError);
+      return NextResponse.json(
+        { error: 'Failed to consume credits' },
+        { status: 500 }
+      );
+    }
+
     // Save evaluation to Convex
     try {
       await convex.mutation(api.evaluations.saveEvaluation, {
@@ -384,6 +421,8 @@ Provide a brief analysis (2-3 sentences) of the search performance and AI compat
         ai_optimization_score: result.ai_optimization.score,
         search_performance: extendedResult.search_performance,
         recommendations: result.recommendations,
+        credits_consumed: creditCheck.requiredCredits,
+        scan_type: scanType,
       });
     } catch (convexError) {
       console.error('Error saving evaluation to Convex:', convexError);

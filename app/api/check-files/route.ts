@@ -33,7 +33,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { url } = await request.json();
+    const { url, scanType = 'basic' } = await request.json();
+
+    // Check if user has enough credits
+    const creditCheck = await convex.query(api.credits.checkCreditsForScan, {
+      userId,
+      scanType,
+    });
+
+    if (!creditCheck.hasEnoughCredits) {
+      return NextResponse.json(
+        { 
+          error: 'Insufficient credits',
+          details: {
+            required: creditCheck.requiredCredits,
+            available: creditCheck.availableCredits,
+            shortfall: creditCheck.shortfall,
+          }
+        },
+        { status: 402 } // Payment Required
+      );
+    }
 
     if (!url) {
       return NextResponse.json(
@@ -183,6 +203,23 @@ export async function POST(request: NextRequest) {
       return foundIndicators.length >= 2;
     }
 
+    // Consume credits for the scan
+    try {
+      await convex.mutation(api.credits.consumeCredits, {
+        userId,
+        credits: creditCheck.requiredCredits,
+        scanType,
+        scanUrl: baseUrl.href,
+        description: `${scanType.charAt(0).toUpperCase() + scanType.slice(1)} AI files check`,
+      });
+    } catch (creditError) {
+      console.error('Error consuming credits:', creditError);
+      return NextResponse.json(
+        { error: 'Failed to consume credits' },
+        { status: 500 }
+      );
+    }
+
     // Save to Convex
     try {
       await convex.mutation(api.aiFiles.saveAIFiles, {
@@ -190,6 +227,8 @@ export async function POST(request: NextRequest) {
         url: baseUrl.href,
         domain: baseUrl.hostname,
         files: fileChecks,
+        credits_consumed: creditCheck.requiredCredits,
+        scan_type: scanType,
       });
     } catch (convexError) {
       console.error('Error saving AI files to Convex:', convexError);

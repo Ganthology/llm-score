@@ -10,6 +10,7 @@
 
 import type * as aiFiles from "../aiFiles.js";
 import type * as auth from "../auth.js";
+import type * as credits from "../credits.js";
 import type * as evaluations from "../evaluations.js";
 import type * as http from "../http.js";
 import type * as websiteMaps from "../websiteMaps.js";
@@ -31,6 +32,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   aiFiles: typeof aiFiles;
   auth: typeof auth;
+  credits: typeof credits;
   evaluations: typeof evaluations;
   http: typeof http;
   websiteMaps: typeof websiteMaps;

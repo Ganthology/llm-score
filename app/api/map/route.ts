@@ -23,7 +23,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { url } = await request.json();
+    const { url, scanType = 'basic' } = await request.json();
+
+    // Check if user has enough credits
+    const creditCheck = await convex.query(api.credits.checkCreditsForScan, {
+      userId,
+      scanType,
+    });
+
+    if (!creditCheck.hasEnoughCredits) {
+      return NextResponse.json(
+        { 
+          error: 'Insufficient credits',
+          details: {
+            required: creditCheck.requiredCredits,
+            available: creditCheck.availableCredits,
+            shortfall: creditCheck.shortfall,
+          }
+        },
+        { status: 402 } // Payment Required
+      );
+    }
 
     if (!url) {
       return NextResponse.json(
@@ -55,6 +75,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Consume credits for the scan
+    try {
+      await convex.mutation(api.credits.consumeCredits, {
+        userId,
+        credits: creditCheck.requiredCredits,
+        scanType,
+        scanUrl: url,
+        description: `${scanType.charAt(0).toUpperCase() + scanType.slice(1)} website map scan`,
+      });
+    } catch (creditError) {
+      console.error('Error consuming credits:', creditError);
+      return NextResponse.json(
+        { error: 'Failed to consume credits' },
+        { status: 500 }
+      );
+    }
+
     // Save to Convex
     try {
       const urlObj = new URL(url);
@@ -81,6 +118,8 @@ export async function POST(request: NextRequest) {
         html_pages: htmlPages.length,
         missing_titles: missingTitles,
         missing_descriptions: missingDescriptions,
+        credits_consumed: creditCheck.requiredCredits,
+        scan_type: scanType,
       });
     } catch (convexError) {
       console.error('Error saving to Convex:', convexError);
