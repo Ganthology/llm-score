@@ -5,12 +5,16 @@ import { AuthButton } from './AuthButton';
 
 interface AuthGuardProps {
   children: React.ReactNode;
+  fallback?: React.ReactNode;
 }
 
-export function AuthGuard({ children }: AuthGuardProps) {
+export function AuthGuard({ children, fallback }: AuthGuardProps) {
   const { data: session, isPending } = authClient.useSession();
 
   if (isPending) {
+    if (fallback !== undefined) {
+      return <>{fallback}</>;
+    }
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-4 font-mono">
         <div className="text-center">
@@ -22,6 +26,9 @@ export function AuthGuard({ children }: AuthGuardProps) {
   }
 
   if (!session?.user) {
+    if (fallback !== undefined) {
+      return <>{fallback}</>;
+    }
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-4 font-mono">
         <div className="max-w-md w-full bg-white border border-gray-200 p-8 text-center">
