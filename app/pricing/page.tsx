@@ -38,11 +38,21 @@ export default function PricingPage() {
   const [purchasing, setPurchasing] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
   const { data: session } = authClient.useSession();
 
   useEffect(() => {
     if (session?.user) {
       fetchCredits();
+      
+      // Check if user came from pricing card click
+      const savedPackage = localStorage.getItem('selectedPackage');
+      if (savedPackage) {
+        setSelectedPackage(savedPackage);
+        // Clear the localStorage after setting state
+        localStorage.removeItem('selectedPackage');
+        localStorage.removeItem('redirectAfterLogin');
+      }
     }
   }, [session]);
 
@@ -166,6 +176,13 @@ export default function PricingPage() {
             </div>
           </div>
 
+          {/* Selected Package Message */}
+          {selectedPackage && !success && (
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded text-blue-800 text-sm font-mono">
+              🎯 You selected the <strong>{selectedPackage.charAt(0).toUpperCase() + selectedPackage.slice(1)} Pack</strong>. Click the highlighted package below to complete your purchase!
+            </div>
+          )}
+
           {/* Success Message */}
           {success && (
             <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded text-green-800 text-sm font-mono">
@@ -185,18 +202,28 @@ export default function PricingPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               {Object.entries(packages).map(([key, pkg]) => {
                 const isPopular = key === 'growth';
+                const isSelected = selectedPackage === key;
                 const pricePerCredit = pkg.price / pkg.credits;
                 
                 return (
                   <div 
                     key={key}
-                    className={`relative bg-white border rounded-lg p-6 ${
-                      isPopular 
+                    className={`relative bg-white border rounded-lg p-6 transition-all ${
+                      isSelected
+                        ? 'border-green-500 shadow-xl ring-2 ring-green-200 bg-green-50'
+                        : isPopular 
                         ? 'border-blue-500 shadow-lg' 
                         : 'border-gray-200'
                     }`}
                   >
-                    {isPopular && (
+                    {isSelected && (
+                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                        <span className="bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse">
+                          SELECTED
+                        </span>
+                      </div>
+                    )}
+                    {isPopular && !isSelected && (
                       <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                         <span className="bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full">
                           BEST VALUE
@@ -232,7 +259,9 @@ export default function PricingPage() {
                         onClick={() => handlePurchase(key)}
                         disabled={purchasing === key}
                         className={`w-full py-3 px-4 font-bold transition-colors ${
-                          isPopular
+                          isSelected
+                            ? 'bg-green-500 hover:bg-green-600 text-white animate-pulse'
+                            : isPopular
                             ? 'bg-blue-500 hover:bg-blue-600 text-white'
                             : 'bg-black hover:bg-gray-800 text-white'
                         } disabled:opacity-50 disabled:cursor-not-allowed`}
@@ -242,6 +271,8 @@ export default function PricingPage() {
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                             Processing...
                           </div>
+                        ) : isSelected ? (
+                          `🚀 Complete Purchase - ${pkg.credits} Credit${pkg.credits !== 1 ? 's' : ''}`
                         ) : (
                           `Purchase ${pkg.credits} Credit${pkg.credits !== 1 ? 's' : ''}`
                         )}

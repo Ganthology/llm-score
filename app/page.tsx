@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { AuthGuard } from '../components/AuthGuard';
 import { AuthButton } from '../components/AuthButton';
 import CreditsDisplay from '../components/CreditsDisplay';
+import { authClient } from '@/lib/auth-client';
 
 interface LinkResult {
   url: string;
@@ -59,6 +60,14 @@ export default function Home() {
   const [evaluation, setEvaluation] = useState<EvaluationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [insufficientCredits, setInsufficientCredits] = useState<any>(null);
+
+  const handlePricingClick = (packageType: string) => {
+    // Store the selected package in localStorage so we can redirect to purchase after login
+    localStorage.setItem('selectedPackage', packageType);
+    localStorage.setItem('redirectAfterLogin', '/pricing');
+    // Trigger the sign in flow
+    authClient.signIn.social({ provider: 'google' });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,104 +167,154 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4 font-mono">
-      <div className="max-w-2xl w-full bg-white border border-gray-200 p-8">
-        <div className="text-center mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-bold text-black">LLMScore</h1>
-            <div className="flex items-center gap-4">
-              <AuthGuard fallback={null}>
+    <AuthGuard fallback={
+      <div className="min-h-screen bg-white flex items-center justify-center p-4 font-mono">
+        <div className="max-w-4xl w-full">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-black mb-2">LLMScore</h1>
+            <p className="text-lg text-gray-800 leading-relaxed">
+              Is your website LLM friendly? Get your LLM score now
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            {/* Left Side - Login */}
+            <div className="bg-white border border-gray-200 p-8">
+              <h2 className="text-xl font-bold text-black mb-4">Get Started</h2>
+              <p className="text-gray-600 mb-6 text-sm leading-relaxed">
+                Sign in to analyze your website's LLM compatibility and track improvements over time.
+              </p>
+
+              <div className="mb-6">
+                <AuthButton />
+              </div>
+
+              <div className="text-xs text-gray-600 space-y-2 border-t border-gray-100 pt-4">
+                <p>✓ Comprehensive LLM scoring</p>
+                <p>✓ Search performance analysis</p>
+                <p>✓ AI optimization recommendations</p>
+                <p>✓ Track progress over time</p>
+              </div>
+            </div>
+
+            {/* Right Side - Pricing */}
+            <div className="bg-white border border-gray-200 p-8">
+              <h2 className="text-xl font-bold text-black mb-4">Simple Pricing</h2>
+              <p className="text-gray-600 mb-6 text-sm">
+                Pay per scan with our credit system. No subscriptions, no hidden fees.
+              </p>
+
+              <div className="space-y-4 mb-6">
+                {/* Starter Package */}
+                <div 
+                  onClick={() => handlePricingClick('starter')}
+                  className="border border-gray-200 rounded p-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group"
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <div>
+                      <div className="font-bold text-black">Starter Pack</div>
+                      <div className="text-xs text-gray-500">Perfect for testing</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xl font-bold text-black">$5</div>
+                      <div className="text-xs text-blue-600">1 Credit</div>
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-600 group-hover:text-blue-600 transition-colors font-medium">
+                    Click to sign up and purchase →
+                  </div>
+                </div>
+
+                {/* Growth Package - Popular */}
+                <div 
+                  onClick={() => handlePricingClick('growth')}
+                  className="border-2 border-blue-500 rounded p-4 hover:border-blue-600 hover:shadow-lg transition-all cursor-pointer group relative"
+                >
+                  <div className="absolute -top-2 left-4">
+                    <span className="bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded">POPULAR</span>
+                  </div>
+                  <div className="flex justify-between items-center mb-2">
+                    <div>
+                      <div className="font-bold text-black">Growth Pack</div>
+                      <div className="text-xs text-green-600 font-bold">Save $5</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xl font-bold text-black">$20</div>
+                      <div className="text-xs text-blue-600">5 Credits</div>
+                    </div>
+                  </div>
+                  <div className="text-xs text-blue-600 group-hover:text-blue-700 transition-colors font-bold">
+                    Click to sign up and purchase →
+                  </div>
+                </div>
+
+                {/* Pro Package */}
+                <div 
+                  onClick={() => handlePricingClick('pro')}
+                  className="border border-gray-200 rounded p-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group"
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <div>
+                      <div className="font-bold text-black">Pro Pack</div>
+                      <div className="text-xs text-green-600 font-bold">Save $25</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xl font-bold text-black">$50</div>
+                      <div className="text-xs text-blue-600">15 Credits</div>
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-600 group-hover:text-blue-600 transition-colors font-medium">
+                    Click to sign up and purchase →
+                  </div>
+                </div>
+              </div>
+
+              {/* What's Included */}
+              <div className="bg-blue-50 border border-blue-200 rounded p-4">
+                <div className="text-xs text-blue-800 mb-2">
+                  <strong>Each credit includes:</strong>
+                </div>
+                <div className="text-xs text-blue-700 space-y-1">
+                  <div>• Complete website mapping</div>
+                  <div>• AI file optimization check</div>
+                  <div>• Search performance analysis</div>
+                  <div>• LLM compatibility scoring</div>
+                </div>
+              </div>
+
+              {/* Coming Soon */}
+              <div className="mt-4 p-3 bg-purple-50 border border-purple-200 rounded">
+                <div className="text-xs text-purple-800 font-bold mb-2">🚀 Coming Soon (Premium):</div>
+                <div className="text-xs text-purple-700">
+                  Advanced SEO suggestions • LLM text generation • Content quality checks
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }>
+      <div className="min-h-screen bg-white flex items-center justify-center p-4 font-mono">
+        <div className="max-w-2xl w-full bg-white border border-gray-200 p-8">
+          <div className="text-center mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <h1 className="text-2xl font-bold text-black">LLMScore</h1>
+              <div className="flex items-center gap-4">
                 <CreditsDisplay />
-              </AuthGuard>
-              <AuthButton />
-              <AuthGuard fallback={null}>
+                <AuthButton />
                 <a
                   href="/dashboard"
                   className="text-sm text-gray-600 hover:text-black font-mono underline"
                 >
                   View Dashboard →
                 </a>
-              </AuthGuard>
-            </div>
-          </div>
-          <p className="text-base text-gray-800 leading-relaxed">
-            Is your website LLM friendly? Get your LLM score now
-          </p>
-        </div>
-
-        {/* Pricing Preview Section - Visible to Everyone */}
-        <div className="mb-8 p-6 bg-gray-50 border border-gray-200 rounded">
-          <h3 className="text-lg font-bold text-black mb-4 text-center">Simple Credit-Based Pricing</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div className="text-center p-4 bg-white border border-gray-200 rounded">
-              <div className="text-sm font-bold text-gray-600 mb-1">STARTER</div>
-              <div className="text-2xl font-bold text-black mb-1">$5</div>
-              <div className="text-sm text-blue-600 font-bold mb-2">1 Credit</div>
-              <div className="text-xs text-gray-500">Perfect for testing</div>
-            </div>
-            
-            <div className="text-center p-4 bg-white border-2 border-blue-500 rounded relative">
-              <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
-                <span className="bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded">POPULAR</span>
-              </div>
-              <div className="text-sm font-bold text-gray-600 mb-1">GROWTH</div>
-              <div className="text-2xl font-bold text-black mb-1">$20</div>
-              <div className="text-sm text-blue-600 font-bold mb-1">5 Credits</div>
-              <div className="text-xs text-green-600 font-bold mb-2">Save $5</div>
-              <div className="text-xs text-gray-500">Best value</div>
-            </div>
-            
-            <div className="text-center p-4 bg-white border border-gray-200 rounded">
-              <div className="text-sm font-bold text-gray-600 mb-1">PRO</div>
-              <div className="text-2xl font-bold text-black mb-1">$50</div>
-              <div className="text-sm text-blue-600 font-bold mb-1">15 Credits</div>
-              <div className="text-xs text-green-600 font-bold mb-2">Save $25</div>
-              <div className="text-xs text-gray-500">For power users</div>
-            </div>
-          </div>
-          
-          <div className="text-center">
-            <div className="inline-flex items-center px-3 py-2 bg-blue-50 border border-blue-200 rounded text-sm mb-4">
-              <svg className="w-4 h-4 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="text-blue-800 font-mono">
-                <strong>1 Credit = 1 Complete Website Scan</strong> (includes mapping, AI file checks, and full evaluation)
-              </span>
-            </div>
-            
-            {/* Coming Soon Features */}
-            <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded">
-              <h4 className="text-sm font-bold text-purple-800 mb-2">🚀 Coming Soon: Premium Features</h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs text-purple-700">
-                <div className="flex items-center">
-                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                  Premium SEO Suggestions
-                </div>
-                <div className="flex items-center">
-                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                  LLM Text Generation
-                </div>
-                <div className="flex items-center">
-                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                  LLM Text Quality Check
-                </div>
-              </div>
-              <div className="mt-2 text-xs text-purple-600">
-                Premium scans will cost 3 credits and include advanced AI-powered features
               </div>
             </div>
+            <p className="text-base text-gray-800 leading-relaxed">
+              Is your website LLM friendly? Get your LLM score now
+            </p>
           </div>
-        </div>
-
-        {/* Scanner Form - Requires Authentication */}
-        <AuthGuard>
           <form onSubmit={handleSubmit} className="space-y-6 mb-8">
           <div>
             <input
