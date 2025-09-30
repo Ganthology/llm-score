@@ -174,6 +174,11 @@ export default function PricingPage() {
               <span className="font-bold text-lg text-black">{currentBalance}</span>
               <span className="text-sm text-gray-600 ml-1">credit{currentBalance !== 1 ? 's' : ''}</span>
             </div>
+            {currentBalance === 1 && !selectedPackage && (
+              <div className="mt-2 text-sm text-green-600 font-mono">
+                🎉 Welcome! You have your free credit ready to use - <a href="/" className="underline hover:text-green-700">start scanning now</a>
+              </div>
+            )}
           </div>
 
           {/* Selected Package Message */}
@@ -197,9 +202,34 @@ export default function PricingPage() {
             </div>
           )}
 
+          {/* Free Plan Info */}
+          {creditsData && currentBalance === 1 && !selectedPackage && (
+            <div className="mb-8 p-6 bg-green-50 border border-green-200 rounded-lg">
+              <div className="text-center">
+                <h3 className="text-xl font-bold text-green-800 mb-2">🎉 You're on the Free Plan!</h3>
+                <p className="text-green-700 mb-4">
+                  You have <strong>1 free credit</strong> ready to use. Start by scanning your first website!
+                </p>
+                <a 
+                  href="/"
+                  className="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded transition-colors"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  Start Your Free Scan
+                </a>
+              </div>
+            </div>
+          )}
+
           {/* Pricing Cards */}
           {packages && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div>
+              <h3 className="text-xl font-bold text-black mb-4 text-center">
+                {currentBalance === 1 && !selectedPackage ? "Need More Credits?" : "Credit Packages"}
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               {Object.entries(packages).map(([key, pkg]) => {
                 const isPopular = key === 'growth';
                 const isSelected = selectedPackage === key;
@@ -281,6 +311,7 @@ export default function PricingPage() {
                   </div>
                 );
               })}
+              </div>
             </div>
           )}
 

@@ -63,13 +63,29 @@ export const initializeUserCredits = mutation({
       .first();
 
     if (!existing) {
-      return await ctx.db.insert("user_credits", {
+      // Give new users 1 free credit
+      const newUserId = await ctx.db.insert("user_credits", {
         userId: args.userId,
-        credits: 0,
-        total_purchased: 0,
+        credits: 1, // Start with 1 free credit
+        total_purchased: 1, // Count the free credit as "purchased"
         total_consumed: 0,
         last_updated: Date.now(),
       });
+
+      // Record the free credit transaction
+      await ctx.db.insert("credit_transactions", {
+        userId: args.userId,
+        type: "purchase",
+        amount: 1,
+        credits_before: 0,
+        credits_after: 1,
+        description: "Welcome bonus - Free credit for new users",
+        package_type: "free",
+        price_paid: 0,
+        created_at: Date.now(),
+      });
+
+      return newUserId;
     }
 
     return existing._id;

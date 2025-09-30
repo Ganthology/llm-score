@@ -97,6 +97,7 @@ export default function CreditsDisplay() {
   const { credits, stats, pricing } = creditsData;
   const balance = credits.credits;
   const isLowBalance = balance < pricing.scan_costs.basic;
+  const isFreeUser = balance === 1 && credits.total_consumed === 0;
 
   return (
     <div className="flex items-center space-x-4">
@@ -110,9 +111,15 @@ export default function CreditsDisplay() {
             : 'bg-green-50 border-green-200 text-green-800'
         }`}>
           <span className="font-bold">{balance}</span> credit{balance !== 1 ? 's' : ''}
+          {isFreeUser && <span className="text-xs ml-1">(free)</span>}
         </div>
         
-        {isLowBalance && (
+        {isFreeUser && (
+          <div className="text-xs text-green-600 font-mono">
+            🎉 Free credit
+          </div>
+        )}
+        {isLowBalance && !isFreeUser && (
           <div className="text-xs text-red-600 font-mono">
             ⚠️ Low balance
           </div>

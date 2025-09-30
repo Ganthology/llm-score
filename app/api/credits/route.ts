@@ -35,6 +35,12 @@ export async function GET(request: NextRequest) {
       stats,
       recent_transactions: transactions,
       pricing: {
+        free_plan: {
+          name: "Free Plan",
+          credits: 1,
+          price: 0.00,
+          description: "Get started with 1 free credit - no payment required!"
+        },
         packages: {
           starter: {
             name: "Starter Pack",
