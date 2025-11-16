@@ -118,7 +118,7 @@ Return only a comma-separated list of keywords, no explanations. Example: "web s
 Return only a comma-separated list of keywords, no explanations. Example: "web scraping, data extraction, api tools, crawler service, content parsing"`;
 
     const keywordResponse = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-5-mini',
       messages: [{ role: 'user', content: keywordPrompt }],
       temperature: 0.7,
       max_tokens: 200,
