@@ -2,6 +2,34 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  // Store user credits and balances
+  user_credits: defineTable({
+    userId: v.string(),
+    credits: v.number(),
+    total_purchased: v.number(),
+    total_consumed: v.number(),
+    last_updated: v.number(),
+  })
+    .index("by_user", ["userId"]),
+
+  // Store credit transactions (purchases and consumption)
+  credit_transactions: defineTable({
+    userId: v.string(),
+    type: v.union(v.literal("purchase"), v.literal("consumption")),
+    amount: v.number(),
+    credits_before: v.number(),
+    credits_after: v.number(),
+    description: v.string(),
+    scan_type: v.optional(v.string()), // "basic", "premium" (for future)
+    scan_url: v.optional(v.string()),
+    package_type: v.optional(v.string()), // "starter", "growth", "pro"
+    price_paid: v.optional(v.number()), // USD cents
+    created_at: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_type", ["userId", "type"])
+    .index("by_created_at", ["created_at"]),
+
   // Store website evaluations
   evaluations: defineTable({
     userId: v.string(),
@@ -23,6 +51,8 @@ export default defineSchema({
       search_insights: v.array(v.string()),
     }),
     recommendations: v.array(v.string()),
+    credits_consumed: v.number(), // Track credits used for this scan
+    scan_type: v.string(), // "basic", "premium"
     created_at: v.number(),
     updated_at: v.number(),
   })
@@ -46,6 +76,8 @@ export default defineSchema({
     html_pages: v.number(),
     missing_titles: v.number(),
     missing_descriptions: v.number(),
+    credits_consumed: v.number(), // Track credits used for this map scan
+    scan_type: v.string(), // "basic", "premium"
     created_at: v.number(),
   })
     .index("by_user", ["userId"])
@@ -66,6 +98,8 @@ export default defineSchema({
       statusCode: v.optional(v.number()),
       contentType: v.optional(v.string()),
     })),
+    credits_consumed: v.number(), // Track credits used for this file check
+    scan_type: v.string(), // "basic", "premium"
     created_at: v.number(),
   })
     .index("by_user", ["userId"])
